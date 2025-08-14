@@ -1,0 +1,51 @@
+name: Push or Dispatch Workflow with PR Lookup
+
+on:
+  push:
+    branches:
+      - master
+      - develop
+  workflow_dispatch:
+
+jobs:
+  find-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch || github.ref_name }}
+
+      - name: Set up GitHub CLI
+        uses: cli/cli-action@v2
+
+      - name: Find PR related to this push or dispatch
+        run: |
+          BRANCH_NAME=${{ github.event.inputs.branch || github.ref_name }}
+          echo "Looking for PR for branch $BRANCH_NAME"
+
+          # Try to detect PR from merge commit message (merge commit strategy)
+          COMMIT_MSG=$(git log -1 --pretty=%B "$GITHUB_SHA")
+          echo "Commit message: $COMMIT_MSG"
+
+          if [[ "$COMMIT_MSG" =~ Merge\ pull\ request\ \#([0-9]+) ]]; then
+            PR_NUMBER="${BASH_REMATCH[1]}"
+            echo "Found PR #$PR_NUMBER from merge commit message"
+          else
+            echo "No merge commit PR number found, falling back to search"
+            # Search for PR containing this commit (works for squash/rebase)
+            PR_NUMBER=$(gh pr list \
+              --state all \
+              --search "$GITHUB_SHA" \
+              --json number \
+              --jq '.[0].number')
+          fi
+
+          if [ -n "$PR_NUMBER" ]; then
+            echo "Found PR #$PR_NUMBER"
+            gh pr view "$PR_NUMBER" \
+              --json number,title \
+              --jq '{number, title}'
+          else
+            echo "No PR found for this push or branch"
+          fi
