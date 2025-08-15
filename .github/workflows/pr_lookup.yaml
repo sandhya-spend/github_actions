@@ -3,7 +3,7 @@ name: Push or Dispatch Workflow with PR Lookup
 on:
   push:
     branches:
-      - master
+      - main
       - develop
   workflow_dispatch:
 
