@@ -17,6 +17,8 @@ jobs:
           ref: ${{ github.event.inputs.branch || github.ref_name }}
 
       - name: Find PR related to this push or dispatch
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           BRANCH_NAME=${{ github.event.inputs.branch || github.ref_name }}
           echo "Looking for PR for branch $BRANCH_NAME"
