@@ -16,9 +16,6 @@ jobs:
         with:
           ref: ${{ github.event.inputs.branch || github.ref_name }}
 
-      - name: Set up GitHub CLI
-        uses: cli/cli-action@v2
-
       - name: Find PR related to this push or dispatch
         run: |
           BRANCH_NAME=${{ github.event.inputs.branch || github.ref_name }}
